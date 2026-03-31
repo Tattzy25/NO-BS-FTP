@@ -80,7 +80,7 @@ app.delete('/mcp', async (req, res) => {
     }));
 });
 // Start the server
-const PORT = process.env.MCP_SERVER_PORT || 4000;
+const PORT = process.env.MCP_SERVER_PORT || 3005;
 app.listen(PORT, () => {
     console.log(`MCP Stateless Streamable HTTP Server listening on port ${PORT}`);
 });

@@ -1,5 +1,8 @@
 import express from "express";
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  McpServer,
+  ResourceTemplate,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 // Import Express types correctly
@@ -13,7 +16,7 @@ app.use(express.json());
 
 const server = new McpServer({
   name: "Echo",
-  version: "1.0.0"
+  version: "1.0.0",
 });
 
 // Register our capabilities
@@ -21,59 +24,55 @@ server.resource(
   "echo",
   new ResourceTemplate("echo://{message}", { list: undefined }),
   async (uri, { message }) => ({
-    contents: [{
-      uri: uri.href,
-      text: `Resource echo: ${message}`
-    }]
-  })
+    contents: [
+      {
+        uri: uri.href,
+        text: `Resource echo: ${message}`,
+      },
+    ],
+  }),
 );
 
-server.tool(
-  "echo",
-  { message: z.string() },
-  async ({ message }) => ({
-    content: [{ type: "text", text: `Tool echo: ${message}` }]
-  })
-);
+server.tool("echo", { message: z.string() }, async ({ message }) => ({
+  content: [{ type: "text", text: `Tool echo: ${message}` }],
+}));
 
-server.prompt(
-  "echo",
-  { message: z.string() },
-  ({ message }) => ({
-    messages: [{
+server.prompt("echo", { message: z.string() }, ({ message }) => ({
+  messages: [
+    {
       role: "user",
       content: {
         type: "text",
-        text: `Please process this message: ${message}`
-      }
-    }]
-  })
-);
+        text: `Please process this message: ${message}`,
+      },
+    },
+  ],
+}));
 
-app.post('/mcp', async (req: Request, res: Response) => {
+app.post("/mcp", async (req: Request, res: Response) => {
   try {
     // Log incoming request for debugging
-    console.log('Received request:', JSON.stringify(req.body, null, 2));
-    
+    console.log("Received request:", JSON.stringify(req.body, null, 2));
+
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
     });
-    
-    res.on('close', () => {
-      console.log('Request closed');
+
+    res.on("close", () => {
+      console.log("Request closed");
       transport.close();
     });
-    
+
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
   } catch (error) {
-    console.error('Error handling MCP request:', error);
+    console.error("Error handling MCP request:", error);
     if (!res.headersSent) {
       res.status(500).json({
-        jsonrpc: '2.0',
+        jsonrpc: "2.0",
         error: {
           code: -32603,
-          message: 'Internal server error',
+          message: "Internal server error",
         },
         id: null,
       });
@@ -81,42 +80,51 @@ app.post('/mcp', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/mcp', async (req: Request, res: Response) => {
-  console.log('Received GET MCP request');
-  res.writeHead(405).end(JSON.stringify({
-    jsonrpc: "2.0",
-    error: {
-      code: -32000,
-      message: "Method not allowed. Use POST to interact with the MCP server. Follow README for details."
-    },
-    id: null
-  }));
+app.get("/mcp", async (req: Request, res: Response) => {
+  console.log("Received GET MCP request");
+  res.writeHead(405).end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32000,
+        message:
+          "Method not allowed. Use POST to interact with the MCP server. Follow README for details.",
+      },
+      id: null,
+    }),
+  );
 });
 
-app.delete('/mcp', async (req: Request, res: Response) => {
-  console.log('Received DELETE MCP request');
-  res.writeHead(405).end(JSON.stringify({
-    jsonrpc: "2.0",
-    error: {
-      code: -32000,
-      message: "Method not allowed. Use POST to interact with the MCP server. Follow README for details."
-    },
-    id: null
-  }));
+app.delete("/mcp", async (req: Request, res: Response) => {
+  console.log("Received DELETE MCP request");
+  res.writeHead(405).end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32000,
+        message:
+          "Method not allowed. Use POST to interact with the MCP server. Follow README for details.",
+      },
+      id: null,
+    }),
+  );
 });
 
 // Start the server
-const PORT = process.env.MCP_SERVER_PORT || 4000;
+const PORT = process.env.MCP_SERVER_PORT || 3005;
 app.listen(PORT, () => {
   console.log(`MCP Stateless Streamable HTTP Server listening on port ${PORT}`);
 });
 
 // Base URL for the NO-BS-FTP API
-const API_URL =
-  process.env.MCP_API_URL || "http://no-bs-ftp-production.up.railway.app/mcp";
+const API_URL = process.env.MCP_API_URL || "https://no-bs-ftp-production.up.railway.app";
 
 // Helper function for making API requests
-async function makeAPIRequest<T>(url: string, method: string, body?: any): Promise<T | null> {
+async function makeAPIRequest<T>(
+  url: string,
+  method: string,
+  body?: any,
+): Promise<T | null> {
   const headers = {
     "Content-Type": "application/json",
   };
@@ -137,21 +145,164 @@ async function makeAPIRequest<T>(url: string, method: string, body?: any): Promi
   }
 }
 
-// Interfaces for API responses
-interface MCPHealthStatus {
+// Interfaces for request and response types
+interface ConnectionProfile {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+}
+
+interface HealthStatus {
   status: string;
+  message: string;
 }
 
-interface MCPStats {
-  usage: number;
-  connections: number;
-}
-
-interface EnvFile {
-  content: string;
+interface Stats {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
 }
 
 // Register MCP tools
+
+// @ts-ignore
+server.tool(
+  "invoke-mcp-method",
+  "Invoke MCP JSON-RPC 2.0 methods for S3-compatible object storage operations",
+  {
+    method: z.string().describe("The method to invoke"),
+    params: z.any().optional().describe("Parameters for the method"),
+  },
+  async ({ method, params }) => {
+    const url = `${API_URL}/mcp`;
+    const response = await makeAPIRequest<any>(url, "POST", { method, params });
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to invoke MCP method",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "json",
+          json: response,
+        },
+      ],
+    };
+  },
+);
+
+// @ts-ignore
+server.tool(
+  "get-mcp-get-example",
+  "Example GET endpoint for MCP to support browser requests",
+  {},
+  async () => {
+    const url = `${API_URL}/mcp`;
+    const response = await makeAPIRequest<any>(url, "GET");
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to retrieve MCP GET example",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "json",
+          json: response,
+        },
+      ],
+    };
+  },
+);
+
+// @ts-ignore
+server.tool(
+  "get-connection-profile",
+  "Retrieve the stored S3-compatible provider connection profile",
+  {},
+  async () => {
+    const url = `${API_URL}/connection`;
+    const response = await makeAPIRequest<ConnectionProfile>(url, "GET");
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to retrieve connection profile",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "json",
+          json: response,
+        },
+      ],
+    };
+  },
+);
+
+// @ts-ignore
+server.tool(
+  "set-connection-profile",
+  "Store or update the S3-compatible provider connection profile",
+  {
+    profile: z.object({
+      host: z.string(),
+      port: z.number(),
+      username: z.string(),
+      password: z.string(),
+    }),
+  },
+  async ({ profile }) => {
+    const url = `${API_URL}/connection`;
+    const response = await makeAPIRequest<ConnectionProfile>(
+      url,
+      "POST",
+      profile,
+    );
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to set connection profile",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Connection profile updated successfully",
+        },
+      ],
+    };
+  },
+);
 
 // @ts-ignore
 server.tool(
@@ -159,10 +310,10 @@ server.tool(
   "Get health status of the MCP connection",
   {},
   async () => {
-    const healthUrl = `${API_URL}/health/mcp`;
-    const healthData = await makeAPIRequest<MCPHealthStatus>(healthUrl, "GET");
+    const url = `${API_URL}/health/mcp`;
+    const response = await makeAPIRequest<HealthStatus>(url, "GET");
 
-    if (!healthData) {
+    if (!response) {
       return {
         content: [
           {
@@ -176,8 +327,8 @@ server.tool(
     return {
       content: [
         {
-          type: "text",
-          text: `MCP Health Status: ${healthData.status}`,
+          type: "json",
+          json: response,
         },
       ],
     };
@@ -190,15 +341,15 @@ server.tool(
   "Get usage statistics of the MCP connection",
   {},
   async () => {
-    const statsUrl = `${API_URL}/stats/mcp`;
-    const statsData = await makeAPIRequest<MCPStats>(statsUrl, "GET");
+    const url = `${API_URL}/stats/mcp`;
+    const response = await makeAPIRequest<Stats>(url, "GET");
 
-    if (!statsData) {
+    if (!response) {
       return {
         content: [
           {
             type: "text",
-            text: "Failed to retrieve MCP statistics",
+            text: "Failed to retrieve MCP stats",
           },
         ],
       };
@@ -207,8 +358,8 @@ server.tool(
     return {
       content: [
         {
-          type: "text",
-          text: `MCP Usage: ${statsData.usage}, Connections: ${statsData.connections}`,
+          type: "json",
+          json: response,
         },
       ],
     };
@@ -217,14 +368,14 @@ server.tool(
 
 // @ts-ignore
 server.tool(
-  "get-api-health-status",
+  "get-health-status",
   "Get health status of the API",
   {},
   async () => {
-    const healthUrl = `${API_URL}/health`;
-    const healthData = await makeAPIRequest<MCPHealthStatus>(healthUrl, "GET");
+    const url = `${API_URL}/health`;
+    const response = await makeAPIRequest<any>(url, "GET");
 
-    if (!healthData) {
+    if (!response) {
       return {
         content: [
           {
@@ -238,8 +389,8 @@ server.tool(
     return {
       content: [
         {
-          type: "text",
-          text: `API Health Status: ${healthData.status}`,
+          type: "json",
+          json: response,
         },
       ],
     };
@@ -247,35 +398,30 @@ server.tool(
 );
 
 // @ts-ignore
-server.tool(
-  "get-api-stats",
-  "Get usage statistics of the API",
-  {},
-  async () => {
-    const statsUrl = `${API_URL}/stats`;
-    const statsData = await makeAPIRequest<MCPStats>(statsUrl, "GET");
+server.tool("get-stats", "Get usage statistics of the API", {}, async () => {
+  const url = `${API_URL}/stats`;
+  const response = await makeAPIRequest<any>(url, "GET");
 
-    if (!statsData) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Failed to retrieve API statistics",
-          },
-        ],
-      };
-    }
-
+  if (!response) {
     return {
       content: [
         {
           type: "text",
-          text: `API Usage: ${statsData.usage}, Connections: ${statsData.connections}`,
+          text: "Failed to retrieve API stats",
         },
       ],
     };
-  },
-);
+  }
+
+  return {
+    content: [
+      {
+        type: "json",
+        json: response,
+      },
+    ],
+  };
+});
 
 // @ts-ignore
 server.tool(
@@ -283,10 +429,10 @@ server.tool(
   "Retrieve the .env configuration file for agent deployment",
   {},
   async () => {
-    const envUrl = `${API_URL}/.env`;
-    const envData = await makeAPIRequest<EnvFile>(envUrl, "GET");
+    const url = `${API_URL}/.env`;
+    const response = await makeAPIRequest<string>(url, "GET");
 
-    if (!envData) {
+    if (!response) {
       return {
         content: [
           {
@@ -301,11 +447,142 @@ server.tool(
       content: [
         {
           type: "text",
-          text: `Env File Content:\n${envData.content}`,
+          text: response,
         },
       ],
     };
   },
 );
 
-// Additional tools for LLM orchestration and skills can be added similarly
+// @ts-ignore
+server.tool(
+  "openai-orchestration",
+  "OpenAI-compatible endpoint for LLM orchestration",
+  {
+    input: z.string().describe("Input for OpenAI orchestration"),
+  },
+  async ({ input }) => {
+    const url = `${API_URL}/llm/openai`;
+    const response = await makeAPIRequest<any>(url, "POST", { input });
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to invoke OpenAI orchestration",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "json",
+          json: response,
+        },
+      ],
+    };
+  },
+);
+
+// @ts-ignore
+server.tool(
+  "google-llm-orchestration",
+  "Google-compatible endpoint for LLM orchestration",
+  {
+    input: z.string().describe("Input for Google LLM orchestration"),
+  },
+  async ({ input }) => {
+    const url = `${API_URL}/llm/google`;
+    const response = await makeAPIRequest<any>(url, "POST", { input });
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to invoke Google LLM orchestration",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "json",
+          json: response,
+        },
+      ],
+    };
+  },
+);
+
+// @ts-ignore
+server.tool(
+  "list-skills",
+  "List available skills for LLM integration",
+  {},
+  async () => {
+    const url = `${API_URL}/skills`;
+    const response = await makeAPIRequest<any>(url, "GET");
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to retrieve skills",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "json",
+          json: response,
+        },
+      ],
+    };
+  },
+);
+
+// @ts-ignore
+server.tool(
+  "add-skill",
+  "Add a new skill for LLM integration",
+  {
+    skill: z.object({
+      name: z.string(),
+      description: z.string(),
+    }),
+  },
+  async ({ skill }) => {
+    const url = `${API_URL}/skills`;
+    const response = await makeAPIRequest<any>(url, "POST", skill);
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to add skill",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Skill added successfully",
+        },
+      ],
+    };
+  },
+);

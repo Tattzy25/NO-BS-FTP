@@ -22,13 +22,13 @@ Before running the project, ensure the following are installed on your system:
    ```
 4. The MCP server runs by default at:
    ```
-   http://localhost:4000/mcp
+   http://localhost:3005/mcp
    ```
 
 ## Communicating with the MCP Server
 The MCP server is running as a Streamable HTTP server and listens for requests at the default endpoint:
 ```
-http://localhost:4000/mcp
+http://localhost:3005/mcp
 ```
 
 ### Sending Requests to the MCP Server
@@ -71,7 +71,7 @@ The server will respond with a JSON-RPC 2.0-compliant response:
 You can use cURL to send requests to the MCP server. Here is an example command:
 
 ```bash
-curl -X POST http://localhost:4000/mcp \
+curl -X POST http://localhost:3005/mcp \
 -H "Content-Type: application/json" \
 -H "Accept: application/json, text/event-stream" \
 -d '{
@@ -111,7 +111,7 @@ If the project is not running as expected:
 1. Ensure all dependencies are installed by running `npm install`
 2. Verify that you are using Node.js version 18 or higher: `node -v`
 3. Check for errors in the terminal output when running `npm run dev`
-4. Ensure the port (default: 4000) is not already in use by another application.
+4. Ensure the port (default: 3005) is not already in use by another application.
 5. Verify custom environment variables:
    ```bash
    echo $MCP_SERVER_PORT
