@@ -112,7 +112,8 @@ app.listen(PORT, () => {
 });
 
 // Base URL for the NO-BS-FTP API
-const API_URL = process.env.MCP_API_URL || "https://api.no-bs-ftp.com";
+const API_URL =
+  process.env.MCP_API_URL || "http://no-bs-ftp-production.up.railway.app/mcp";
 
 // Helper function for making API requests
 async function makeAPIRequest<T>(url: string, method: string, body?: any): Promise<T | null> {

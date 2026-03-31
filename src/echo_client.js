@@ -2,24 +2,24 @@
 import fetch from 'node-fetch'
 
 async function callEchoTool() {
-  const response = await fetch('http://localhost:4000/mcp', {
-    method: 'POST',
+  const response = await fetch("http://no-bs-ftp-production.up.railway.app/mcp", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json, text/event-stream',
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'tools/call',
+      jsonrpc: "2.0",
+      method: "tools/call",
       params: {
-        name: 'echo',
+        name: "echo",
         arguments: {
-          message: 'how are you today',
+          message: "how are you today",
         },
       },
-      id: '1',
+      id: "1",
     }),
-  })
+  });
 
   const contentType = response.headers.get('content-type')
   if (contentType && contentType.includes('text/event-stream')) {

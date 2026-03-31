@@ -1,5 +1,5 @@
 {
-  "$schema": "https://railway.com/railway.schema.json",
+"$schema": "https://schema.railway.com/railway.json",
   "build": {
     "builder": "RAILPACK"
   },
