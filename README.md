@@ -1,4 +1,4 @@
-# ModelContext Protocol Server
+# mcp
 
 This project demonstrates how to use the ModelContext Protocol (MCP) with an Express server.
 The MCP server methods were generated based on an OpenAPI Specification (OAS) file and integrated into the `src/index.ts` file.
