@@ -17,15 +17,18 @@ async function getCapabilities() {
       }),
     })
 
-    if (response.headers.get('content-type').includes('text/event-stream')) {
+    const contentType = response.headers.get('content-type')
+    if (contentType && contentType.includes('text/event-stream')) {
       // Handle server-sent events
-      for await (const chunk of response.body) {
-        const text = new TextDecoder().decode(chunk)
-        const lines = text.split('\n')
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.substring(6))
-            console.log(JSON.stringify(data, null, 2))
+      if (response.body) {
+        for await (const chunk of response.body) {
+          const text = new TextDecoder().decode(chunk as Uint8Array)
+          const lines = text.split('\n')
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.substring(6))
+              console.log(JSON.stringify(data, null, 2))
+            }
           }
         }
       }
