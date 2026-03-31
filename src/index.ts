@@ -111,13 +111,15 @@ app.delete("/mcp", async (req: Request, res: Response) => {
 });
 
 // Start the server
-const PORT = process.env.MCP_SERVER_PORT || 3005;
-app.listen(PORT, () => {
-  console.log(`MCP Stateless Streamable HTTP Server listening on port ${PORT}`);
+const PORT = Number(process.env.PORT || process.env.MCP_SERVER_PORT || 3005);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(
+    `MCP Stateless Streamable HTTP Server listening on 0.0.0.0:${PORT}`,
+  );
 });
 
 // Base URL for the NO-BS-FTP API
-const API_URL = process.env.MCP_API_URL || "https://no-bs-ftp-production.up.railway.app";
+const API_URL = process.env.MCP_API_URL || "https://no-bs-ftp-production.up.railway.app/mcp";
 
 // Helper function for making API requests
 async function makeAPIRequest<T>(
