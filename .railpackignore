@@ -1,0 +1,7 @@
+# .railpackignore
+#
+# This file intentionally overrides .gitignore for Railpack builds.
+# dist/ is excluded from version control via .gitignore, but must be
+# present in the runtime image so that `node dist/index.js` can start.
+# Leaving this file empty (comments only) ensures Railpack includes
+# the compiled TypeScript output without inheriting the .gitignore exclusions.
