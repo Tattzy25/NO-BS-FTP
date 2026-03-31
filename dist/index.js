@@ -89,7 +89,7 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`MCP Stateless Streamable HTTP Server listening on 0.0.0.0:${PORT}`);
 });
 // Base URL for the NO-BS-FTP API
-const API_URL = process.env.MCP_API_URL || "https://no-bs-ftp-production.up.railway.app/mcp";
+const API_URL = process.env.MCP_API_URL || "https://no-bs-ftp-production.up.railway.app";
 // Helper function for making API requests
 async function makeAPIRequest(url, method, body) {
     const headers = {
