@@ -1,10 +1,10 @@
 {
-  "name": "modelcontext-express",
+  "name": "no-bs-ftp-mcp",
   "private": true,
   "type": "module",
   "license": "MIT",
   "version": "1.0.0",
-  "description": "An example of using ModelContext with Express",
+  "description": "API for MCP Streamable HTTP transport with JSON-RPC 2.0 for S3-compatible object storage operations. Supports bucket and key based identity, S3-style pagination, structured tags, and multipart uploads. Designed for production use with proper error handling and OpenAI-compatible LLM orchestration support.",
   "scripts": {
     "dev": "node --loader ts-node/esm src/index.ts",
     "build": "tsc",
